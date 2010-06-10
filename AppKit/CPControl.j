@@ -99,6 +99,8 @@ var CPControlBlackColor     = [CPColor blackColor];
     CGPoint             _previousTrackingLocation;
 
     CPString            _toolTip;
+    
+    CPFormatter         _formatter @accessors(property=formatter);
 }
 
 + (CPDictionary)themeAttributes
@@ -469,15 +471,23 @@ var CPControlBlackColor     = [CPColor blackColor];
 */
 - (CPString)stringValue
 {
-    return (_value === undefined || _value === nil) ? "" : String(_value);
+    var objectValue = [self objectValue];
+    
+    if([self formatter])
+        [[self formatter] stringForObjectValue:objectValue];
+    else
+        return (objectValue === undefined || objectValue === nil) ? "" : String(objectValue);
 }
 
 /*!
     Set's the receiver's string value
 */
-- (void)setStringValue:(CPString)anObject
+- (void)setStringValue:(CPString)aString
 {
-    [self setObjectValue:anObject];
+    if([self formatter])
+        [self setObjectValue:[[self formatter] objectValueForString:aString]];
+    else
+        [self setObjectValue:aString];
 }
 
 - (void)takeDoubleValueFrom:(id)sender
