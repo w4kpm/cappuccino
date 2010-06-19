@@ -569,7 +569,23 @@ CPButtonStateMixed  = CPThemeState("mixed");
 */
 - (void)setKeyEquivalent:(CPString)aString
 {
+    // Check if the key equivalent is the enter key
+    // Treat \r and \n as the same key equivalent. See issue #710.
+    if (aString === CPNewlineCharacter || aString === CPCarriageReturnCharacter)
+        [[self window] setDefaultButton:self];
+    else if ([[self window] defaultButton] === self)
+        [[self window] setDefaultButton:NO];
+
     _keyEquivalent = aString || @"";
+}
+
+- (void)viewWillMoveToWindow:(CPWindow)aWindow
+{
+    if ([[self window] defaultButton] === self)
+        [[self window] setDefaultButton:nil];
+
+    if ([self keyEquivalent] === CPNewlineCharacter || [self keyEquivalent] === CPCarriageReturnCharacter)
+        [aWindow setDefaultButton:self];
 }
 
 /*!
@@ -602,6 +618,10 @@ CPButtonStateMixed  = CPThemeState("mixed");
 */
 - (BOOL)performKeyEquivalent:(CPEvent)anEvent
 {
+    // Don't handle the key equivalent for the default window because the window will handle it for us
+    if ([[self window] defaultButton] === self)
+        return NO;
+
     if (![anEvent _triggersKeyEquivalent:[self keyEquivalent] withModifierMask:[self keyEquivalentModifierMask]])
         return NO;
 
@@ -629,7 +649,9 @@ var CPButtonImageKey                    = @"CPButtonImageKey",
     CPButtonTitleKey                    = @"CPButtonTitleKey",
     CPButtonAlternateTitleKey           = @"CPButtonAlternateTitleKey",
     CPButtonIsBorderedKey               = @"CPButtonIsBorderedKey",
-    CPButtonImageDimsWhenDisabledKey    = @"CPButtonImageDimsWhenDisabledKey";
+    CPButtonImageDimsWhenDisabledKey    = @"CPButtonImageDimsWhenDisabledKey",
+    CPButtonKeyEquivalentKey            = @"CPButtonKeyEquivalentKey",
+    CPButtonKeyEquivalentMaskKey        = @"CPButtonKeyEquivalentMaskKey";
 
 @implementation CPButton (CPCoding)
 
@@ -653,6 +675,11 @@ var CPButtonImageKey                    = @"CPButtonImageKey",
 
         [self setImageDimsWhenDisabled:[aCoder decodeObjectForKey:CPButtonImageDimsWhenDisabledKey]];
 
+        if ([aCoder containsValueForKey:CPButtonKeyEquivalentKey])
+            [self setKeyEquivalent:CFData.decodeBase64ToUtf16String([aCoder decodeObjectForKey:CPButtonKeyEquivalentKey])];
+
+        [self setKeyEquivalentModifierMask:[aCoder decodeObjectForKey:CPButtonKeyEquivalentMaskKey]];
+
         [self setNeedsLayout];
         [self setNeedsDisplay:YES];
     }
@@ -675,6 +702,11 @@ var CPButtonImageKey                    = @"CPButtonImageKey",
     [aCoder encodeObject:_alternateTitle forKey:CPButtonAlternateTitleKey];
 
     [aCoder encodeObject:[self imageDimsWhenDisabled] forKey:CPButtonImageDimsWhenDisabledKey];
+
+    if (_keyEquivalent)
+        [aCoder encodeObject:CFData.encodeBase64Utf16String(_keyEquivalent) forKey:CPButtonKeyEquivalentKey];
+
+    [aCoder encodeInt:_keyEquivalentModifierMask forKey:CPButtonKeyEquivalentMaskKey];
 }
 
 @end

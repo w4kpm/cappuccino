@@ -654,9 +654,9 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         return;
 
     _sourceListActiveGradient        = [aDictionary valueForKey:CPSourceListGradient];
-    _sourceListActiveTopLineColor    = [aDictionary valueForKey:CPSourceListTopLineColor]
+    _sourceListActiveTopLineColor    = [aDictionary valueForKey:CPSourceListTopLineColor];
     _sourceListActiveBottomLineColor = [aDictionary valueForKey:CPSourceListBottomLineColor];
-    [self setNeedsDisplay:YES]
+    [self setNeedsDisplay:YES];
 }
 
 /*!
@@ -909,6 +909,9 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     else
         _selectedRowIndexes = [rows copy];
 
+    // update last selected row
+    _lastSelectedRow = ([rows count] > 0) ? [rows lastIndex] : -1;
+
     [self _updateHighlightWithOldRows:previousSelectedIndexes newRows:_selectedRowIndexes];
     [_tableDrawView display]; // FIXME: should be setNeedsDisplayInRect:enclosing rect of new (de)selected rows
                               // but currently -drawRect: is not implemented here
@@ -1020,7 +1023,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (int)selectedRow
 {
-    return [_selectedRowIndexes lastIndex];
+    return _lastSelectedRow;
 }
 
 - (CPIndexSet)selectedRowIndexes
@@ -3268,8 +3271,6 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         }
     }
 
-    _lastSelectedRow = ([newSelection count] > 0) ? aRow : -1;
-
     // if empty selection is not allowed and the new selection has nothing selected, abort
     if (!_allowsEmptySelection && [newSelection count] === 0)
         return;
@@ -3481,7 +3482,7 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
         _gridColor = [aCoder decodeObjectForKey:CPTableViewGridColorKey] || [CPColor grayColor];
         _gridStyleMask = [aCoder decodeIntForKey:CPTableViewGridStyleMaskKey] || CPTableViewGridNone;
 
-        _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey]
+        _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey];
         _alternatingRowBackgroundColors =
             [[CPColor whiteColor], [CPColor colorWithRed:245.0 / 255.0 green:249.0 / 255.0 blue:252.0 / 255.0 alpha:1.0]];
 
