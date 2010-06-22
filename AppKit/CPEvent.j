@@ -535,11 +535,6 @@ var _CPEventPeriodicEventPeriod         = 0,
         aKeyEquivalentModifierMask &= ~CPCommandKeyMask;
     }
 
-    if ((modifierFlags & (CPShiftKeyMask | CPAlternateKeyMask | CPCommandKeyMask | CPControlKeyMask)) !== aKeyEquivalentModifierMask)
-        return NO;
-
-    return [characters caseInsensitiveCompare:aKeyEquivalent] === CPOrderedSame;
-
     if ((_modifierFlags & (CPShiftKeyMask | CPAlternateKeyMask | CPCommandKeyMask | CPControlKeyMask)) !== aKeyEquivalentModifierMask)
         return NO;
 
