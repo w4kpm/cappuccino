@@ -41,6 +41,7 @@
 @import "NSMatrix.j"
 @import "NSMenu.j"
 @import "NSMenuItem.j"
+@import "NSNibBindingConnector.j"
 @import "NSNibConnector.j"
 @import "NSObjectController.j"
 @import "NSOutlineView.j"

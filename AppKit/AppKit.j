@@ -31,6 +31,7 @@
 @import "CPButtonBar.j"
 @import "CPCheckBox.j"
 @import "CPCib.j"
+@import "CPCibBindingConnector.j"
 @import "CPCibConnector.j"
 @import "CPCibControlConnector.j"
 @import "CPCibLoading.j"
