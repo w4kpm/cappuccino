@@ -21,6 +21,7 @@
  */
 
 @import "_NSCornerView.j"
+@import "NSArrayController.j"
 @import "NSButton.j"
 @import "NSCell.j"
 @import "NSClassSwapper.j"
@@ -41,6 +42,7 @@
 @import "NSMenu.j"
 @import "NSMenuItem.j"
 @import "NSNibConnector.j"
+@import "NSObjectController.j"
 @import "NSOutlineView.j"
 @import "NSPopUpButton.j"
 @import "NSResponder.j"
