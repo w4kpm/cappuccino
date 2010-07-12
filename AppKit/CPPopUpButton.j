@@ -40,6 +40,8 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 */
 @implementation CPPopUpButton : CPButton
 {
+    CPArray     _content @accessors(property=content);
+    
     int         _selectedIndex;
     CPRectEdge  _preferredEdge;
 
@@ -49,6 +51,39 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 + (CPString)themeClass
 {
     return "popup-button";
+}
+
++ (void)initialize
+{
+    if (self === [CPPopUpButton class])
+    {
+        [self exposeBinding:@"enabled"];
+        [self exposeBinding:@"hidden"];
+        
+        [self exposeBinding:@"content"];
+        [self exposeBinding:@"contentObjects"];
+        [self exposeBinding:@"contentValues"];
+        
+        [self exposeBinding:@"selectedIndex"];
+        [self exposeBinding:@"selectedObject"];
+        [self exposeBinding:@"selectedTag"];
+        [self exposeBinding:@"selectedValue"];
+    }
+}
+
++ (CPSet)keyPathsForValuesAffectingSelectedObject
+{
+    return [CPSet setWithObjects:"selectedIndex"];
+}
+
++ (CPSet)keyPathsForValuesAffectingSelectedTag
+{
+    return [CPSet setWithObjects:"selectedIndex"];
+}
+
++ (CPSet)keyPathsForValuesAffectingSelectedValue
+{
+    return [CPSet setWithObjects:"selectedIndex"];
 }
 
 /*!
@@ -256,7 +291,7 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 
     if (_selectedIndex >= 0 && ![self pullsDown])
         [[self selectedItem] setState:CPOffState];
-
+    
     _selectedIndex = anIndex;
 
     if (_selectedIndex >= 0 && ![self pullsDown])
@@ -722,6 +757,159 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 }
 
 @end
+
+
+@implementation CPPopUpButton (Bindings)
+
+- (void)setContent:(CPArray)content
+{
+    if(_content == content)
+        return;
+    
+    [self willChangeValueForKey:"content"];
+    _content = content;
+    [self didChangeValueForKey:"content"];
+    
+    [self _reloadContent];
+}
+
+- (void)_reloadContent
+{
+    [self removeAllItems];
+    
+    var contentCount = [_content count],
+        contentValues = [self _contentValues],
+        contentObjects = [self _contentObjects];
+    
+    var contentBindingOptions = [[self infoForBinding:"content"] objectForKey:CPOptionsKey];
+    
+    if([contentBindingOptions objectForKey:CPInsertsNullPlaceholderBindingOption])
+        [self addItemWithTitle:nil];
+    
+    for(var i = 0; i < contentCount; i++) {
+        var menuItem = [[CPMenuItem alloc] init];
+        [menuItem setTitle:[contentValues objectAtIndex:i]];
+        [menuItem setRepresentedObject:[contentObjects objectAtIndex:i]];
+        
+        [self addItem:menuItem];
+    }
+}
+
+- (CPArray)_contentValues
+{
+    var contentValuesBindingInfo = [self infoForBinding:"contentValues"];
+    
+    if(contentValuesBindingInfo)
+    {
+        var destination = [contentValuesBindingInfo objectForKey:CPObservedObjectKey],
+            keyPath = [contentValuesBindingInfo objectForKey:CPObservedKeyPathKey];
+        
+        return [destination valueForKeyPath:keyPath];
+    }
+    else
+    {
+        return [_content valueForKey:"description"];
+    }
+}
+
+- (CPArray)_contentObjects
+{
+    var contentObjectsBindingInfo = [self infoForBinding:"contentObjects"];
+    
+    if(contentObjectsBindingInfo)
+    {
+        var destination = [contentObjectsBindingInfo objectForKey:CPObservedObjectKey],
+            keyPath = [contentObjectsBindingInfo objectForKey:CPObservedKeyPathKey];
+        
+        return [destination valueForKeyPath:keyPath];
+    }
+    else
+    {
+        return _content;
+    }
+}
+
+- (void)setSelectedIndex:(int)anIndex
+{
+    [self selectItemAtIndex:anIndex];
+}
+
+- (int)selectedIndex
+{
+    return [self indexOfSelectedItem];
+}
+
+- (void)setSelectedValue:(CPString)aValue
+{
+    var items = [self itemArray],
+        itemCount = [items count];
+    
+    for(var i = 0; i < itemCount; i++) {
+        var item = [items objectAtIndex:i];
+        
+        if([item title] == aValue)
+        {
+            [self selectItem:item];
+            return;
+        }
+    }
+    
+    CPLog.debug("No menu item found with value " + aValue);
+}
+
+- (CPString)selectedValue
+{
+    return [[self selectedItem] title];
+}
+
+- (void)setSelectedObject:(id)anObject
+{
+    var items = [self itemArray],
+        itemCount = [items count];
+    
+    for(var i = 0; i < itemCount; i++) {
+        var item = [items objectAtIndex:i];
+        
+        if([item representedObject] === anObject)
+        {
+            [self selectItem:item];
+            return;
+        }
+    }
+    
+    CPLog.debug("No menu item found with represented object " + anObject);
+}
+
+- (id)selectedObject
+{
+    return [[self selectedItem] representedObject];
+}
+
+- (void)setSelectedTag:(int)aTag
+{
+    var items = [self itemArray],
+        itemCount = [items count];
+    
+    for(var i = 0; i < itemCount; i++) {
+        var item = [items objectAtIndex:i];
+        
+        if([item tag] == aTag)
+        {
+            [self selectItem:item];
+            return;
+        }
+    }
+    
+    CPLog.debug("No menu item found with tag " + aTag);
+}
+
+- (int)selectedTag
+{
+    return [[self selectedItem] tag];
+}
+
+@end
+
 
 var CPPopUpButtonMenuKey            = @"CPPopUpButtonMenuKey",
     CPPopUpButtonSelectedIndexKey   = @"CPPopUpButtonSelectedIndexKey",
