@@ -6,7 +6,7 @@
 
 CPUnderlyingErrorKey                    = "CPUnderlyingErrorKey";
 
-CPLocalizedDescriptionKey               = "CPLocalizedFailureReasonErrorKey";
+CPLocalizedDescriptionKey               = "CPLocalizedDescriptionKey";
 CPLocalizedFailureReasonErrorKey        = "CPLocalizedFailureReasonErrorKey";
 CPLocalizedRecoverySuggestionErrorKey   = "CPLocalizedRecoverySuggestionErrorKey";
 CPLocalizedRecoveryOptionsErrorKey      = "CPLocalizedRecoveryOptionsErrorKey";
