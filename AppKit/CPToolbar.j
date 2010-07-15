@@ -55,6 +55,14 @@ CPToolbarDisplayModeLabelOnly           = 3;
 var CPToolbarsByIdentifier              = nil;
 var CPToolbarConfigurationsByIdentifier = nil;
 
+var CPToolbarDidRemoveItemNotification  = "CPToolbarDidRemoveItemNotification",
+    CPToolbarWillAddItemNotification    = "CPToolbarWillAddItemNotification";
+
+var CPToolbarDelegate_toolbar_itemForItemIdentifier_willBeInsertedIntoToolbar   = 1 << 0,
+    CPToolbarDelegate_toolbarAllowedItemIdentifiers                             = 1 << 1,
+    CPToolbarDelegate_toolbarDefaultItemIdentifiers                             = 1 << 2,
+    CPToolbarDelegate_toolbarSelectableItemIdentifiers                          = 1 << 3;
+
 /*!
     @ingroup appkit
     @class CPToolbar
@@ -91,6 +99,7 @@ var CPToolbarConfigurationsByIdentifier = nil;
     BOOL                    _isVisible;
 
     id                      _delegate;
+    int                     _implementedDelegateMethods;
 
     CPArray                 _itemIdentifiers;
 
@@ -222,9 +231,34 @@ var CPToolbarConfigurationsByIdentifier = nil;
 {
     if (_delegate === aDelegate)
         return;
-
+    
+    var nc = [CPNotificationCenter defaultCenter];
+    
+    [nc removeObserver:_delegate name:CPToolbarDidRemoveItemNotification object:self];
+    [nc removeObserver:_delegate name:CPToolbarWillAddItemNotification object:self];
+    
+    _implementedDelegateMethods = 0;
+    
     _delegate = aDelegate;
-
+    
+    if ([_delegate respondsToSelector:@selector(toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:)])
+        _implementedDelegateMethods |= CPToolbarDelegate_toolbar_itemForItemIdentifier_willBeInsertedIntoToolbar;
+    
+    if ([_delegate respondsToSelector:@selector(toolbarAllowedItemIdentifiers:)])
+        _implementedDelegateMethods |= CPToolbarDelegate_toolbarAllowedItemIdentifiers;
+    
+    if ([_delegate respondsToSelector:@selector(toolbarDefaultItemIdentifiers:)])
+        _implementedDelegateMethods |= CPToolbarDelegate_toolbarDefaultItemIdentifiers;
+    
+    if ([_delegate respondsToSelector:@selector(toolbarSelectableItemIdentifiers:)])
+        _implementedDelegateMethods |= CPToolbarDelegate_toolbarSelectableItemIdentifiers;
+    
+    if ([_delegate respondsToSelector:@selector(toolbarDidRemoveItem:)])
+        [nc addObserver:_delegate selector:@selector(toolbarDidRemoveItem:) name:CPToolbarDidRemoveItemNotification object:self]
+    
+    if ([_delegate respondsToSelector:@selector(toolbarWillAddItem:)])
+        [nc addObserver:_delegate selector:@selector(toolbarWillAddItem:) name:CPToolbarWillAddItemNotification object:self]
+    
     [self _reloadToolbarItems];
 }
 
@@ -259,17 +293,26 @@ var CPToolbarConfigurationsByIdentifier = nil;
     // _defaultItems may have been loaded from Cib
     _itemIdentifiers = [_defaultItems valueForKey:@"itemIdentifier"] || [];
 
-    if (_delegate)
+    if (_implementedDelegateMethods & CPToolbarDelegate_toolbarDefaultItemIdentifiers)
     {
         var itemIdentifiersFromDelegate = [[_delegate toolbarDefaultItemIdentifiers:self] mutableCopy];
 
         if (itemIdentifiersFromDelegate)
             _itemIdentifiers = [_itemIdentifiers arrayByAddingObjectsFromArray:itemIdentifiersFromDelegate];
     }
+    
+    var oldItems = _items,
+        oldItemCount = [oldItems count];
+    
+    for(var i = 0; i < oldItemCount; i++) {
+        [[CPNotificationCenter defaultCenter] postNotificationName:CPToolbarDidRemoveItemNotification
+                                                            object:self
+                                                          userInfo:[CPDictionary dictionaryWithObject:oldItems[i] forKey:"item"]];
+    }
 
     var index = 0,
         count = [_itemIdentifiers count];
-
+    
     _items = [];
 
     for (; index < count; ++index)
@@ -281,7 +324,7 @@ var CPToolbarConfigurationsByIdentifier = nil;
         if (!item)
             item = [_identifiedItems objectForKey:identifier];
 
-        if (!item && _delegate)
+        if (!item && _implementedDelegateMethods & CPToolbarDelegate_toolbar_itemForItemIdentifier_willBeInsertedIntoToolbar)
             item = [_delegate toolbar:self itemForItemIdentifier:identifier willBeInsertedIntoToolbar:YES];
 
         item = [item copy];
@@ -291,7 +334,11 @@ var CPToolbarConfigurationsByIdentifier = nil;
                          reason:@"Toolbar delegate " + _delegate + " returned nil toolbar item for identifier \"" + identifier + "\""];
 
         item._toolbar = self;
-
+        
+        [[CPNotificationCenter defaultCenter] postNotificationName:CPToolbarWillAddItemNotification
+                                                            object:self
+                                                          userInfo:[CPDictionary dictionaryWithObject:item forKey:"item"]];
+        
         [_items addObject:item];
     }
 
@@ -349,7 +396,7 @@ var CPToolbarConfigurationsByIdentifier = nil;
     if (!item)
     {
         item = [CPToolbarItem _standardItemWithItemIdentifier:identifier];
-        if (_delegate && !item)
+        if (!item && _implementedDelegateMethods & CPToolbarDelegate_toolbar_itemForItemIdentifier_willBeInsertedIntoToolbar)
         {
             item = [[_delegate toolbar:self itemForItemIdentifier:identifier willBeInsertedIntoToolbar:toolbar] copy];
             if (!item)
@@ -376,7 +423,7 @@ var CPToolbarConfigurationsByIdentifier = nil;
 /* @ignore */
 - (id)_defaultToolbarItems
 {
-    if (!_defaultItems && [_delegate respondsToSelector:@selector(toolbarDefaultItemIdentifiers:)])
+    if (!_defaultItems && _implementedDelegateMethods & CPToolbarDelegate_toolbarDefaultItemIdentifiers)
     {
         _defaultItems = [];
 
