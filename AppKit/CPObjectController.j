@@ -51,15 +51,29 @@
     return [CPSet setWithObjects:"editable", "selection"];
 }
 
+- (id)init
+{
+    self = [super init];
+    
+    if(self)
+    {
+        _isEditable = YES;
+        _objectClass = [CPMutableDictionary class];
+    }
+    
+    return self;
+}
+
 - (id)initWithContent:(id)aContent
 {
     self = [super init];
 
     if (self)
     {
+        _isEditable = YES;
+        _objectClass = [CPMutableDictionary class];
+        
         [self setContent:aContent];
-        [self setEditable:YES];
-        [self setObjectClass:[CPMutableDictionary class]];
     }
 
     return self;
@@ -233,6 +247,9 @@ var CPObjectControllerObjectClassNameKey                = @"CPObjectControllerOb
         _automaticallyPreparesContent = [aCoder decodeBoolForKey:CPObjectControllerAutomaticallyPreparesContentKey] || NO;
         
         _observedKeys = [[CPCountedSet alloc] init];
+        
+        if (_automaticallyPreparesContent)
+            [self prepareContent];
     }
 
     return self;
