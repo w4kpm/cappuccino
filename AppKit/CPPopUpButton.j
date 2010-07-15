@@ -292,7 +292,11 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
     if (_selectedIndex >= 0 && ![self pullsDown])
         [[self selectedItem] setState:CPOffState];
     
+    [self willChangeValueForKey:"selectedIndex"];
     _selectedIndex = anIndex;
+    [self didChangeValueForKey:"selectedIndex"];
+    
+    [[CPKeyValueBinding getBinding:"selectedIndex" forObject:self] reverseSetValueFor:"selectedIndex"];
 
     if (_selectedIndex >= 0 && ![self pullsDown])
         [[self selectedItem] setState:CPOnState];
@@ -316,6 +320,11 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 - (void)selectItemWithTitle:(CPString)aTitle
 {
     [self selectItemAtIndex:[self indexOfItemWithTitle:aTitle]];
+}
+
+- (void)selectItemWithRepresentedObject:(id)anObject
+{
+    [self selectItemAtIndex:[self indexOfItemWithRepresentedObject:anObject]];
 }
 
 /*!
@@ -483,6 +492,11 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 - (int)indexOfItemWithTitle:(CPString)aTitle
 {
     return [_menu indexOfItemWithTitle:aTitle];
+}
+
+- (int)indexOfItemWithRepresentedObject:(id)anObject
+{
+    return [_menu indexOfItemWithRepresentedObject:anObject];
 }
 
 /*!
@@ -841,20 +855,7 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 
 - (void)setSelectedValue:(CPString)aValue
 {
-    var items = [self itemArray],
-        itemCount = [items count];
-    
-    for(var i = 0; i < itemCount; i++) {
-        var item = [items objectAtIndex:i];
-        
-        if([item title] == aValue)
-        {
-            [self selectItem:item];
-            return;
-        }
-    }
-    
-    CPLog.debug("No menu item found with value " + aValue);
+    [self selectItemWithTitle:aValue];
 }
 
 - (CPString)selectedValue
@@ -864,20 +865,7 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 
 - (void)setSelectedObject:(id)anObject
 {
-    var items = [self itemArray],
-        itemCount = [items count];
-    
-    for(var i = 0; i < itemCount; i++) {
-        var item = [items objectAtIndex:i];
-        
-        if([item representedObject] === anObject)
-        {
-            [self selectItem:item];
-            return;
-        }
-    }
-    
-    CPLog.debug("No menu item found with represented object " + anObject);
+    [self selectItemWithRepresentedObject:anObject];
 }
 
 - (id)selectedObject
@@ -887,20 +875,7 @@ CPPopUpButtonStatePullsDown = CPThemeState("pulls-down");
 
 - (void)setSelectedTag:(int)aTag
 {
-    var items = [self itemArray],
-        itemCount = [items count];
-    
-    for(var i = 0; i < itemCount; i++) {
-        var item = [items objectAtIndex:i];
-        
-        if([item tag] == aTag)
-        {
-            [self selectItem:item];
-            return;
-        }
-    }
-    
-    CPLog.debug("No menu item found with tag " + aTag);
+    [self selectItemWithTag:aTag];
 }
 
 - (int)selectedTag
