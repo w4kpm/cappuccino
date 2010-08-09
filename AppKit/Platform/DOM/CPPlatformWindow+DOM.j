@@ -136,25 +136,50 @@ var CPDOMEventGetClickCount,
 //might be mac only, we should investigate futher later.
 var KeyCodesToPrevent = {},
     CharacterKeysToPrevent = {},
+    KeyCodesToAllow = {},
     MozKeyCodeToKeyCodeMap = {
         61: 187,  // =, equals
         59: 186   // ;, semicolon
     },
-    KeyCodesToFunctionUnicodeMap = {};
+    KeyCodesToUnicodeMap = {};
 
 KeyCodesToPrevent[CPKeyCodes.A] = YES;
 
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.BACKSPACE]     = CPDeleteCharacter;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.DELETE]        = CPDeleteFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.TAB]           = CPTabCharacter;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.ENTER]         = CPCarriageReturnCharacter;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.ESC]           = CPEscapeFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.PAGE_UP]       = CPPageUpFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.PAGE_DOWN]     = CPPageDownFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.LEFT]          = CPLeftArrowFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.UP]            = CPUpArrowFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.RIGHT]         = CPRightArrowFunctionKey;
-KeyCodesToFunctionUnicodeMap[CPKeyCodes.DOWN]          = CPDownArrowFunctionKey;
+KeyCodesToAllow[CPKeyCodes.F1] = YES;
+KeyCodesToAllow[CPKeyCodes.F2] = YES;
+KeyCodesToAllow[CPKeyCodes.F3] = YES;
+KeyCodesToAllow[CPKeyCodes.F4] = YES;
+KeyCodesToAllow[CPKeyCodes.F5] = YES;
+KeyCodesToAllow[CPKeyCodes.F6] = YES;
+KeyCodesToAllow[CPKeyCodes.F7] = YES;
+KeyCodesToAllow[CPKeyCodes.F8] = YES;
+KeyCodesToAllow[CPKeyCodes.F9] = YES;
+KeyCodesToAllow[CPKeyCodes.F10] = YES;
+KeyCodesToAllow[CPKeyCodes.F11] = YES;
+KeyCodesToAllow[CPKeyCodes.F12] = YES;
+
+KeyCodesToUnicodeMap[CPKeyCodes.BACKSPACE]              = CPDeleteCharacter;
+KeyCodesToUnicodeMap[CPKeyCodes.DELETE]                 = CPDeleteFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.TAB]                    = CPTabCharacter;
+KeyCodesToUnicodeMap[CPKeyCodes.ENTER]                  = CPCarriageReturnCharacter;
+KeyCodesToUnicodeMap[CPKeyCodes.ESC]                    = CPEscapeFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.PAGE_UP]                = CPPageUpFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.PAGE_DOWN]              = CPPageDownFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.LEFT]                   = CPLeftArrowFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.UP]                     = CPUpArrowFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.RIGHT]                  = CPRightArrowFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.DOWN]                   = CPDownArrowFunctionKey;
+KeyCodesToUnicodeMap[CPKeyCodes.SEMICOLON]              = ";";
+KeyCodesToUnicodeMap[CPKeyCodes.DASH]                   = "-";
+KeyCodesToUnicodeMap[CPKeyCodes.EQUALS]                 = "=";
+KeyCodesToUnicodeMap[CPKeyCodes.COMMA]                  = ",";
+KeyCodesToUnicodeMap[CPKeyCodes.PERIOD]                 = ".";
+KeyCodesToUnicodeMap[CPKeyCodes.SLASH]                  = "/";
+KeyCodesToUnicodeMap[CPKeyCodes.APOSTROPHE]             = "`";
+KeyCodesToUnicodeMap[CPKeyCodes.SINGLE_QUOTE]           = "'";
+KeyCodesToUnicodeMap[CPKeyCodes.OPEN_SQUARE_BRACKET]    = "[";
+KeyCodesToUnicodeMap[CPKeyCodes.BACKSLASH]              = "\\";
+KeyCodesToUnicodeMap[CPKeyCodes.CLOSE_SQUARE_BRACKET]   = "]";
 
 var ModifierKeyCodes = [
     CPKeyCodes.META,
@@ -623,10 +648,31 @@ var supportsNativeDragAndDrop = [CPPlatform supportsDragAndDrop];
                         (aDOMEvent.altKey ? CPAlternateKeyMask : 0) |
                         (aDOMEvent.metaKey ? CPCommandKeyMask : 0);
 
-    //We want to stop propagation if this is a command key AND this character or keycode has been added to our blacklist
-    StopDOMEventPropagation = !!(!(modifierFlags & (CPControlKeyMask | CPCommandKeyMask)) ||
-                              CharacterKeysToPrevent[String.fromCharCode(aDOMEvent.keyCode || aDOMEvent.charCode).toLowerCase()] ||
-                              KeyCodesToPrevent[aDOMEvent.keyCode]);
+    // With a few exceptions, all key events are blocked from propagating to
+    // the browser.  Here the following exceptions are being allowed:
+    //
+    //   - All keys pressed along with a ctrl or cmd key _unless_ they are in
+    //     one of the two blacklists.
+    //   - Any key listed in the whitelist.
+    //
+    // The ctrl/cmd keys are used for browser hotkeys as are the keys listed in
+    // the whitelist (F1-F12 at the time of writing).
+    //
+    // If a key is listed in both the blacklist and whitelist, the blacklist is
+    // checked first.  The key will be blocked from propagating in that case.
+
+    StopDOMEventPropagation = YES;
+
+    // Make sure it is not in the blacklists.
+    if(! (CharacterKeysToPrevent[String.fromCharCode(aDOMEvent.keyCode || aDOMEvent.charCode).toLowerCase()] || KeyCodesToPrevent[aDOMEvent.keyCode]))
+    {
+        // It is not in the blacklist, let it through if the ctrl/cmd key is
+        // also down or it's in the whitelist.
+        if((modifierFlags & (CPControlKeyMask | CPCommandKeyMask)) || KeyCodesToAllow[aDOMEvent.keyCode])
+        {
+            StopDOMEventPropagation = NO;
+        }
+    }
 
     var isNativePasteEvent = NO,
         isNativeCopyOrCutEvent = NO,
@@ -642,9 +688,9 @@ var supportsNativeDragAndDrop = [CPPlatform supportsDragAndDrop];
 
                             var characters;
 
-                            // Is this a special key?
+                            // Handle key codes for which String.fromCharCode won't work.
                             if (aDOMEvent.which === 0 || aDOMEvent.charCode === 0)
-                                characters = KeyCodesToFunctionUnicodeMap[_keyCode];
+                                characters = KeyCodesToUnicodeMap[_keyCode];
 
                             if (!characters)
                                 characters = String.fromCharCode(_keyCode).toLowerCase();
@@ -724,7 +770,7 @@ var supportsNativeDragAndDrop = [CPPlatform supportsDragAndDrop];
                             var characters = overrideCharacters;
                             // Is this a special key?
                             if (!characters && (aDOMEvent.which === 0 || aDOMEvent.charCode === 0))
-                                characters = KeyCodesToFunctionUnicodeMap[charCode];
+                                characters = KeyCodesToUnicodeMap[charCode];
 
                             if (!characters)
                                 characters = String.fromCharCode(charCode);
@@ -763,7 +809,7 @@ var supportsNativeDragAndDrop = [CPPlatform supportsDragAndDrop];
                             if ([ModifierKeyCodes containsObject:keyCode])
                                 break;
 
-                            var characters = KeyCodesToFunctionUnicodeMap[charCode] || String.fromCharCode(charCode),
+                            var characters = KeyCodesToUnicodeMap[charCode] || String.fromCharCode(charCode),
                                 charactersIgnoringModifiers = characters.toLowerCase();
 
                             if (!(modifierFlags & CPShiftKeyMask) && (modifierFlags & CPCommandKeyMask) && !_capsLockActive)

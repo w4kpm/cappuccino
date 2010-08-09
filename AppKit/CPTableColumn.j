@@ -78,18 +78,7 @@ CPTableColumnUserResizingMask   = 1 << 1;
         var header = [[_CPTableColumnHeaderView alloc] initWithFrame:CGRectMakeZero()];
         [self setHeaderView:header];
 
-        var textDataView = [CPTextField new];
-
-        [textDataView setValue:[CPColor colorWithRed:51.0 / 255.0 green:51.0 / 255.0 blue:51.0 / 255.0 alpha:1.0] 
-          forThemeAttribute:"text-color"];
-
-        [textDataView setValue:[CPColor whiteColor] forThemeAttribute:@"text-color" inState:CPThemeStateSelectedDataView];
-        [textDataView setLineBreakMode:CPLineBreakByTruncatingTail];  
-        [textDataView setValue:[CPFont boldSystemFontOfSize:12.0] forThemeAttribute:@"font" inState:CPThemeStateSelectedDataView];
-        [textDataView setValue:CPCenterVerticalTextAlignment forThemeAttribute:@"vertical-alignment"];
-        [textDataView setValue:CGInsetMake(0.0, 0.0, 0.0, 5.0) forThemeAttribute:@"content-inset"];
-
-        [self setDataView:textDataView];
+        [self setDataView:[CPTextField new]];
     }
 
     return self;
@@ -259,6 +248,8 @@ CPTableColumnUserResizingMask   = 1 << 1;
     if (_dataView)
         _dataViewData[[_dataView UID]] = nil;
 
+    [aView setThemeState:CPThemeStateTableDataView];
+
     _dataView = aView;
     _dataViewData[[aView UID]] = [CPKeyedArchiver archivedDataWithRootObject:aView];
 }
@@ -298,6 +289,9 @@ CPTableColumnUserResizingMask   = 1 << 1;
     var newDataView = [CPKeyedUnarchiver unarchiveObjectWithData:_dataViewData[dataViewUID]];
     newDataView.identifier = dataViewUID;
 
+    // make sure only we have control over the size and placement
+    [newDataView setAutoresizingMask:CPViewNotSizable];
+    
     return newDataView;
 }
 
@@ -468,9 +462,9 @@ var CPTableColumnIdentifierKey   = @"CPTableColumnIdentifierKey",
     CPTableColumnMinWidthKey     = @"CPTableColumnMinWidthKey",
     CPTableColumnMaxWidthKey     = @"CPTableColumnMaxWidthKey",
     CPTableColumnResizingMaskKey = @"CPTableColumnResizingMaskKey",
-    CPTableColumnIsHiddenkey     = @"CPTableColumnIsHiddenKey",
-    CPSortDescriptorPrototypeKey = @"CPSortDescriptorPrototypeKey";
-    CPTableColumnIsHiddenkey     = @"CPTableColumnIsHiddenKey";
+    CPTableColumnIsHiddenKey     = @"CPTableColumnIsHiddenKey",
+    CPSortDescriptorPrototypeKey = @"CPSortDescriptorPrototypeKey",
+    CPTableColumnIsEditableKey   = @"CPTableColumnIsEditableKey";
 
 @implementation CPTableColumn (CPCoding)
 
@@ -492,7 +486,8 @@ var CPTableColumnIdentifierKey   = @"CPTableColumnIdentifierKey",
         [self setHeaderView:[aCoder decodeObjectForKey:CPTableColumnHeaderViewKey]];
 
         _resizingMask  = [aCoder decodeBoolForKey:CPTableColumnResizingMaskKey];
-        _isHidden = [aCoder decodeBoolForKey:CPTableColumnIsHiddenkey];
+        _isHidden = [aCoder decodeBoolForKey:CPTableColumnIsHiddenKey];
+        _isEditable = [aCoder decodeBoolForKey:CPTableColumnIsEditableKey];
         
         _sortDescriptorPrototype = [aCoder decodeObjectForKey:CPSortDescriptorPrototypeKey];
     }
@@ -512,7 +507,8 @@ var CPTableColumnIdentifierKey   = @"CPTableColumnIdentifierKey",
     [aCoder encodeObject:_dataView forKey:CPTableColumnDataViewKey];
 
     [aCoder encodeObject:_resizingMask forKey:CPTableColumnResizingMaskKey];
-    [aCoder encodeBool:_isHidden forKey:CPTableColumnIsHiddenkey];
+    [aCoder encodeBool:_isHidden forKey:CPTableColumnIsHiddenKey];
+    [aCoder encodeBool:_isEditable forKey:CPTableColumnIsEditableKey];
     
     [aCoder encodeObject:_sortDescriptorPrototype forKey:CPSortDescriptorPrototypeKey];
 }
