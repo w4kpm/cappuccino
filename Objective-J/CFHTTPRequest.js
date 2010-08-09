@@ -98,6 +98,8 @@ GLOBAL(CFHTTPRequest) = function()
 
     this._eventDispatcher = new EventDispatcher(this);
     this._nativeRequest = new NativeRequest();
+    
+    this._withCredentials = false;
 
     var self = this;
     this._stateChangeHandler = function()
@@ -206,6 +208,16 @@ CFHTTPRequest.prototype.overrideMimeType = function(/*String*/ aMimeType)
     this._mimeType = aMimeType;
 }
 
+CFHTTPRequest.prototype.setWithCredentials = function(/* BOOL */ aBool)
+{
+    this._withCredentials = aBool;
+}
+
+CFHTTPRequest.prototype.getWithCredentials = function()
+{
+    return this._withCredentials;
+}
+
 CFHTTPRequest.prototype.open = function(/*String*/ aMethod, /*String*/ aURL, /*Boolean*/ isAsynchronous, /*String*/ aUser, /*String*/ aPassword)
 {
     this._isOpen = true;
@@ -225,6 +237,9 @@ CFHTTPRequest.prototype.send = function(/*Object*/ aBody)
         this._nativeRequest.open(this._method, this._URL, this._async, this._user, this._password);
         this._nativeRequest.onreadystatechange = this._stateChangeHandler;
     }
+
+    if(this._nativeRequest.withCredentials !== undefined && this._withCredentials)
+        this._nativeRequest.withCredentials = this._withCredentials;
 
     for (var i in this._requestHeaders)
     {
