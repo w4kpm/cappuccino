@@ -471,7 +471,7 @@ var CPObjectControllerObjectClassNameKey                = @"CPObjectControllerOb
             [self didChangeValueForKey:keyPath];
     }
 
-    [self removeObjectAtIndex:anIndex];
+    [super removeObjectAtIndex:anIndex];
 }
 
 - (void)addObject:(id)anObject
