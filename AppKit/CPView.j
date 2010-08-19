@@ -267,6 +267,8 @@ var CPViewFlags                     = { },
     {
         var width = _CGRectGetWidth(aFrame),
             height = _CGRectGetHeight(aFrame);
+ 	if (width === undefined) width = 0.0;
+        if (height === undefined) height = 0.0;
 
         _subviews = [];
         _registeredDraggedTypes = [CPSet set];
