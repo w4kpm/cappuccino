@@ -880,7 +880,10 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (void)_setSelectedRowIndexes:(CPIndexSet)rows
 {
-    var previousSelectedIndexes = [_selectedRowIndexes copy];
+    if ([_selectedRowIndexes isEqualToIndexSet:rows])
+        return;
+
+    var previousSelectedIndexes = _selectedRowIndexes;
 
     _lastSelectedRow = ([rows count] > 0) ? [rows lastIndex] : -1;
     _selectedRowIndexes = [rows copy];
@@ -1149,23 +1152,23 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 }
 
 /*!
-    Returns the column of the currently edited cell, or -1 if none.
+    Returns the column of the currently edited cell, or CPNotFound if none.
 */
 - (CPInteger)editedColumn
 {
     if (!_editingCellIndex)
-        return -1;
+        return CPNotFound;
     return _editingCellIndex.x;
 }
 
 /*!
-    Returns the row of the currently edited cell, or -1 if none.
+    Returns the row of the currently edited cell, or CPNotFound if none.
 */
 - (CPInteger)editedRow
 {
     if (!_editingCellIndex)
-        return -1;
-    return _editingCellIndex.x;
+        return CPNotFound;
+    return _editingCellIndex.y;
 }
 
 //Setting Auxiliary Views
@@ -3542,7 +3545,7 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
 
         _intercellSpacing = [aCoder decodeSizeForKey:CPTableViewIntercellSpacingKey] || _CGSizeMake(3.0, 2.0);
 
-        [self setGridColor:[aCoder decodeObjectForKey:CPTableViewGridColorKey] || [CPColor grayColor]];
+        [self setGridColor:[aCoder decodeObjectForKey:CPTableViewGridColorKey]];
         _gridStyleMask = [aCoder decodeIntForKey:CPTableViewGridStyleMaskKey] || CPTableViewGridNone;
 
         _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey];
@@ -3550,6 +3553,11 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
 
         _headerView = [aCoder decodeObjectForKey:CPTableViewHeaderViewKey];
         _cornerView = [aCoder decodeObjectForKey:CPTableViewCornerViewKey];
+
+        // Make sure we unhide the cornerview because a corner view loaded from cib is always hidden
+        // This might be a bug in IB, or the way we load the NSvFlags might be broken for _NSCornerView
+        if (_cornerView)
+            [_cornerView setHidden:NO];
 
         _dataSource = [aCoder decodeObjectForKey:CPTableViewDataSourceKey];
         _delegate = [aCoder decodeObjectForKey:CPTableViewDelegateKey];
@@ -3574,7 +3582,7 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
 
     [aCoder encodeInt:_selectionHighlightStyle forKey:CPTableViewSelectionHighlightStyleKey];
     [aCoder encodeInt:_columnAutoResizingStyle forKey:CPTableViewColumnAutoresizingStyleKey];
-    
+
     [aCoder encodeBool:_allowsMultipleSelection forKey:CPTableViewMultipleSelectionKey];
     [aCoder encodeBool:_allowsEmptySelection forKey:CPTableViewEmptySelectionKey];
     [aCoder encodeBool:_allowsColumnReordering forKey:CPTableViewColumnReorderingKey];
