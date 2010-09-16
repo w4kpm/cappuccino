@@ -48,6 +48,7 @@
 @import "CPObjJRuntime.j"
 @import "CPOperation.j"
 @import "CPOperationQueue.j"
+@import "CPProfileDefaults.j"
 @import "CPPredicate.j"
 @import "CPPropertyListSerialization.j"
 @import "CPRange.j"

@@ -25,6 +25,8 @@
 @import <Foundation/CPSortDescriptor.j>
 @import <Foundation/CPString.j>
 
+@import "CPView.j"
+@import "CPTheme.j"
 @import "CPTableHeaderView.j"
 
 #include "CoreGraphics/CGGeometry.h"

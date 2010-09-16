@@ -206,7 +206,7 @@ var RECENT_SEARCH_PREFIX = @"   ";
     [button setAlternateImage:CPSearchFieldCancelPressedImage];
     [button setAutoresizingMask:CPViewMinXMargin];
     [button setTarget:self];
-    [button setAction:@selector(_searchFieldCancel:)];
+    [button setAction:@selector(cancelOperation:)];
 }
 
 // Custom Layout
@@ -680,8 +680,8 @@ var RECENT_SEARCH_PREFIX = @"   ";
     [_partialStringTimer invalidate];
 }
 
-- (void)_searchFieldCancel:(id)sender
-{   
+- (void)cancelOperation:(id)sender
+{
     [self setObjectValue:@""];
     [self _sendPartialString];
     [self _updateCancelButtonVisibility];

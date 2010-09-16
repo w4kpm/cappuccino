@@ -22,7 +22,14 @@
 
 @import "CPDictionary.j"
 @import "CPObject.j"
+@import "CPNotification.j"
+@import "CPNotificationCenter.j"
+@import "CPError.j"
 
+
+CPBundleLoadError           = 1;
+
+CPBundleDidLoadNotification = "CPBundleDidLoadNotification";
 
 /*!
     @class CPBundle
@@ -35,7 +42,11 @@ var CPBundlesForURLStrings = { };
 @implementation CPBundle : CPObject
 {
     CFBundle    _bundle;
+    
     id          _delegate;
+    
+    Function    _didFinishHandler;
+    Function    _errorHandler;
 }
 
 + (CPBundle)bundleWithURL:(CPURL)aURL
@@ -143,21 +154,49 @@ var CPBundlesForURLStrings = { };
     return _bundle.valueForInfoDictionaryKey(aKey);
 }
 
-- (void)loadWithDelegate:(id)aDelegate
+- (void)_loadAsync
 {
-    _delegate = aDelegate;
-
     _bundle.addEventListener("load", function()
     {
-        [_delegate bundleDidFinishLoading:self];
+        // userInfo should contain a list of all classes loaded from this bundle. When writing this there
+        // seems to be no efficient way to get it though.
+        [[CPNotificationCenter defaultCenter] postNotificationName:CPBundleDidLoadNotification object:self userInfo:nil];
+        
+        if(_didFinishHandler)
+            _didFinishHandler(self);
+        else if(_delegate && [_delegate respondsToSelector:@selector(bundleDidFinishLoading:)])
+            [_delegate bundleDidFinishLoading:self];
     });
 
-    _bundle.addEventListener("error", function()
+    _bundle.addEventListener("error", function(info)
     {
-        CPLog.error("Could not find bundle: " + self);
+        var errorInfo = [CPDictionary dictionary];
+        [errorInfo setObject:info["error"] forKey:CPLocalizedDescriptionKey];
+        [errorInfo setObject:info["bundle"].bundleURL() forKey:CPURLErrorKey];
+        
+        var error = [CPError errorWithCode:CPBundleLoadError userInfo:errorInfo];
+        
+        if(_errorHandler)
+            _errorHandler(self, error);
+        else if(_delegate && [_delegate respondsToSelector:@selector(bundle:didFailWithError:)])
+            [_delegate bundle:self didFailWithError:error];
     });
 
     _bundle.load(YES);
+}
+
+- (void)loadWithDelegate:(id)aDelegate
+{
+    _delegate = aDelegate;
+    [self _loadAsync];
+}
+
+- (void)loadWithCompletionHandler:(Function)aCompletionHandler andErrorHandler:(Function)anErrorHandler
+{
+    _didFinishHandler = aCompletionHandler;
+    _errorHandler = anErrorHandler;
+    
+    [self _loadAsync];
 }
 
 - (CPArray)staticResourceURLs

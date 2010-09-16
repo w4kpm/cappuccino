@@ -242,6 +242,13 @@ CFBundle.prototype.isLoaded = function()
 
 DISPLAY_NAME(CFBundle.prototype.isLoading);
 
+CFBundle.prototype.isLoaded = function()
+{
+    return this._loadStatus & CFBundleLoaded;
+}
+
+DISPLAY_NAME(CFBundle.prototype.isLoaded);
+
 CFBundle.prototype.load = function(/*BOOL*/ shouldExecute)
 {
     if (this._loadStatus !== CFBundleUnloaded)

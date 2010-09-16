@@ -54,9 +54,9 @@ parser.option("--mac", "format")
 //     .set(NibFormatIPhone)
 //     .help("Set format to iPhone");
 
-parser.option("-v", "--verbose", "verbose")
-    .inc()
-    .help("Increase verbosity level");
+parser.option("-l", "--log-level", "loglevel")
+    .set()
+    .help("Set the log level to one of fatal, error, warn, info, debug and trace");
 
 parser.option("-q", "--quiet", "quiet")
     .set(true)
@@ -91,15 +91,13 @@ function main(args)
         parser.printUsage(options);
         OS.exit(1);
     }
-
-    if (options.quiet) {}
-    else if (options.verbose === 0)
+    
+    if(options.loglevel)
+        CPLogRegister(CPLogPrint, options.loglevel);
+    else if(!options.quiet)
         CPLogRegister(CPLogPrint, "warn");
-    else if (options.verbose === 1)
-        CPLogRegister(CPLogPrint, "info");
-    else
-        CPLogRegister(CPLogPrint);
-
+    
+    
     CPLog.debug("Input:      " + options.args[0]);
     CPLog.debug("Output:     " + (options.args[1]||""));
     CPLog.debug("Format:     " + ["Auto","Mac","iPhone"][options.format]);

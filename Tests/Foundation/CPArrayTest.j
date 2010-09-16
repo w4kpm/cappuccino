@@ -283,6 +283,12 @@
 
 }
 
+- (void)testValueForKey
+{
+    var array = ["asd", "as41", "ds"];
+    [self assert:[3, 4, 2] equals:[array valueForKey:"length"]];
+}
+
 - (void)testInitWithArrayCopyItems
 {
     var a = [[CopyableObject new], 2, 3, {empty:true}];

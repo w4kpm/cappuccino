@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+
 /*!
     @class CPFormatter
     @ingroup foundation
@@ -77,7 +78,6 @@
 {
     return [self stringForObjectValue:anObject];
 }
-
 
 /*!
     The default implementation of this method raises an exception.
