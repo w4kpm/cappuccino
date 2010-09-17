@@ -27,13 +27,18 @@
 
 - (id)NS_initWithCoder:(CPCoder)aCoder
 {
+
     self = [super init];
     
     if (self)
     {
+        CPLog.info("decoding" + [self className]);
         var objectClassName = [aCoder decodeObjectForKey:"NSObjectClassName"],
             objectClass = CPClassFromString(objectClassName);
-        
+
+	if (objectClassName === null)
+	  objectClassName = [self className];
+	
         // TODO: Ugly, objectClassName should be objectClass but since we don't load any 
         // user classes the class lookup will fail and always be CPMutableDictionary.
         // Should find some nice way to load user classes.
